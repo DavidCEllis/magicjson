@@ -4,3 +4,7 @@ class MagicJsonError(Exception):
 
 class RegistrationError(MagicJsonError):
     """Error with registering a class method"""
+
+
+class MissingDeserializerError(MagicJsonError):
+    """Attempt to deserialize with an unregistered method"""
