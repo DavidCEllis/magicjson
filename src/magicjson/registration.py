@@ -1,8 +1,12 @@
 """
 Registers for class serialization/deserialization
 """
-from typing import Union
+import typing
+
 from .exceptions import RegistrationError
+
+# Types natively serializable by the stdlib json moddule
+native_serializable = typing.Union[None, bool, int, float, str, list, dict]
 
 # Register of classes and functions to call when serializing
 serialize_register: list[tuple[type, callable]] = []
@@ -15,7 +19,7 @@ deserialize_methods: dict[str, callable] = {}
 
 
 def serializer(cls: type):
-    def wrapper(func: callable) -> Union[int, float, str, list, dict]:
+    def wrapper(func: callable) -> native_serializable:
         serialize_register.append((cls, func))
         return func
     return wrapper

@@ -3,7 +3,7 @@ Methods for converting python objects to JSON
 """
 
 from . import __version__
-from registration import serialize_register, deserialize_classes
+from .registration import serialize_register, deserialize_classes
 
 
 # default method to provide to json.dumps (or equivalent) to serialize objects
