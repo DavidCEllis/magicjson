@@ -1,6 +1,9 @@
 # MagicJSON #
 Easy handling of JSON serialization and deserialization for python objects.
 
+If you are just interested in making basic serialization easier you might
+want to look [here](https://gist.github.com/DavidCEllis/df51bbdc8d2668d1e5b291c7367a9c1e).
+
 I thought this would use magic __ methods but decorators were more flexible
 and now this might need a better name.
 
@@ -73,14 +76,12 @@ Output:
 {
   "test1": {
     "_magicjson": "0.0.1a",
-    "_class": "Path",
-    "_alias": "Path",
+    "_deserializer": "Path",
     "contents": "test1"
   },
   "test2": {
     "_magicjson": "0.0.1a",
-    "_class": "Path",
-    "_alias": "Path",
+    "_deserializer": "Path",
     "contents": "test2"
   }
 }

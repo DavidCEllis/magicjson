@@ -1,23 +1,16 @@
 import magicjson.stdlib_serializers
-from magicjson.registration import serialize_register, deserialize_classes, deserialize_methods
+from magicjson.registration import serialize_register, deserialize_register, SerializerInfo
 
 from pathlib import Path
 from decimal import Decimal
 
 
 def test_serialize_register():
-    assert serialize_register == [
-        (Path, magicjson.stdlib_serializers.serialize_path),
-        (Decimal, magicjson.stdlib_serializers.serialize_decimal)
-    ]
-
-
-def test_deserialize_classes():
-    assert deserialize_classes == {Path: 'Path', Decimal: 'Decimal'}
+    assert len(serialize_register) == 2
 
 
 def test_deserialize_methods():
-    assert deserialize_methods == {
+    assert deserialize_register == {
         'Path': magicjson.stdlib_serializers.deserialize_path,
         'Decimal': magicjson.stdlib_serializers.deserialize_decimal
     }

@@ -3,17 +3,16 @@ Methods for converting python objects to JSON
 """
 
 from . import __version__
-from .registration import serialize_register, deserialize_classes
+from .registration import serialize_register
 
 
 # default method to provide to json.dumps (or equivalent) to serialize objects
 def default(o):
-    for cls, method in serialize_register:
-        if isinstance(o, cls):
+    for identifier, method, deserializer_name in serialize_register:
+        if identifier(o):
             result = {
                 "_magicjson": __version__,
-                "_class": cls.__name__,
-                "_alias": deserialize_classes[cls],
+                "_deserializer": deserializer_name,
                 "contents": method(o)
             }
             return result

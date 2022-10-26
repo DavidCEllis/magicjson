@@ -2,7 +2,7 @@
 Convert from a magicjson serialized set of json data back to python objects
 """
 import typing
-from .registration import deserialize_methods
+from .registration import deserialize_register
 from .exceptions import MissingDeserializerError
 
 
@@ -25,13 +25,12 @@ def deserialize(data: native_serializable):
             # First deserialize anything further down the chain
             converted_data = deserialize(data["contents"])
             # Then use the stored method to convert back to python
-            alias = data["_alias"]
-            if alias not in deserialize_methods:
+            deserializer_name = data["_deserializer"]
+            if deserializer_name not in deserialize_register:
                 raise MissingDeserializerError(
-                    f"No method to deserialize {data['_class']}  "
-                    f"is registered under the alias {data['_alias']}"
+                    f"{data['_deserializer']} is not registered as a deserializer"
                 )
-            method = deserialize_methods[data["_alias"]]
+            method = deserialize_register[deserializer_name]
             data = method(converted_data)
         else:
             for key in data.keys():
