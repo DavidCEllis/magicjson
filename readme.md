@@ -20,9 +20,19 @@ or a default method, however defining a default method will override a default
 provided by the class and the function only has 1 argument so a default method
 would need to know how to serialize every potential method.
 
+Looking at `dataclasses` it seems the 
+[solution](https://github.com/python/cpython/blob/3e335f2c0de9b7fab542a18d603f5bbdb1fb2ef3/Lib/dataclasses.py#L1242) 
+used there is to create an asdict function that would do all of the work necesary 
+to create a serializable form.
+This involves recursing through the contents of the class and checking for 
+tuples/namedtuples/lists/dicts specifically and would not handle arbitrary
+container types.
+
 The idea then was to make a module that would allow simple decorators to declare
 that a function was the method for a class to be serialized. These can then be
 used to generate a 'default' function that covers all of the objects.
+Working this way the json serializer does the traversal for us and will convert
+each object using the appropriate function from the register.
 
 It then seemed interesting to find a way to make the deserialization/loads method
 return the original objects instead of just a plain dictionary.
