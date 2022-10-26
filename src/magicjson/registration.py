@@ -15,6 +15,11 @@ serialize_register: list["SerializerInfo"] = []
 deserialize_register: dict[str, Callable[[native_serializable], Any]] = {}
 
 
+def clear_registers():
+    serialize_register.clear()
+    deserialize_register.clear()
+
+
 class SerializerInfo(NamedTuple):
     identifier: Callable[[object], bool]
     serializer_method: Callable[[object], native_serializable]
