@@ -87,3 +87,62 @@ Output:
 }
 (test_recover == test_example)=True
 ```
+
+## Usage with DataClasses #
+
+```python
+from dataclasses import dataclass
+
+from magicjson import dumps, loads
+from magicjson.tools.stdlib_serializers import register_path_serializer, register_dataclass_serializer
+from magicjson.tools.dataclasses import magicjson_dataclass
+
+# builtin dataclass and path serializers
+register_dataclass_serializer()
+register_path_serializer()
+
+
+@magicjson_dataclass
+@dataclass
+class Coordinate:
+    x: float
+    y: float
+
+
+@magicjson_dataclass
+@dataclass
+class Circle:
+    radius: float
+    origin: Coordinate
+
+
+basic_circle = Circle(radius=1.0, origin=Coordinate(0.0, 0.0))
+circle_json = dumps(basic_circle, indent=2)
+circle_restored = loads(circle_json)
+
+print(circle_json)
+print(f"{(circle_restored == basic_circle)=}")
+```
+
+Output:
+```
+{
+  "_magicjson": "0.0.1a",
+  "_deserializer": "dataclass",
+  "contents": {
+    "radius": 1.0,
+    "origin": {
+      "_magicjson": "0.0.1a",
+      "_deserializer": "dataclass",
+      "contents": {
+        "x": 0.0,
+        "y": 0.0,
+        "__class__.__name__": "Coordinate"
+      }
+    },
+    "__class__.__name__": "Circle"
+  }
+}
+(circle_restored == basic_circle)=True
+```
+
