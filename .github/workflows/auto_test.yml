@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  test-prefab:
+  test-magicjson:
 
     runs-on: ${{ matrix.os }}
     strategy:
@@ -27,6 +27,7 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install git+https://github.com/DavidCEllis/smalltest.git
         python -m pip install coverage
+        python -m pip install -e .
     - name: Test with smalltest
       run: |
         smalltest
