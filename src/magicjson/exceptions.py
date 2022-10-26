@@ -1,10 +1,10 @@
-class MagicJsonError(Exception):
+class MagicJSONError(Exception):
     """Base error for all MagicJson Errors"""
 
 
-class RegistrationError(MagicJsonError):
+class RegistrationError(MagicJSONError):
     """Error with registering a class method"""
 
 
-class MissingDeserializerError(MagicJsonError):
+class MissingDeserializerError(MagicJSONError):
     """Attempt to deserialize with an unregistered method"""

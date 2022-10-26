@@ -2,7 +2,7 @@
 Basic serializers for unserializable stdlib classes
 """
 from ..registration import serializer, deserializer
-from ..exceptions import MagicJsonError
+from ..exceptions import MagicJSONError
 
 
 def register_path_serializer():
@@ -43,7 +43,7 @@ def register_dataclass_serializer(strict=True):
             cls = dataclass_register[class_name]
         else:
             if strict:
-                raise MagicJsonError(
+                raise MagicJSONError(
                     f"Could not find dataclass matching {class_name} to deserialize.",
                     "@magicjson_dataclass decorator must be applied to class definition."
                 )
