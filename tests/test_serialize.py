@@ -2,8 +2,7 @@ import json
 
 from smalltest.tools import raises
 
-from magicjson import __version__
-from magicjson.serialize import dumps
+from magicjson import __version__, dumps
 from magicjson.registration import serializer, serialize_register
 
 
