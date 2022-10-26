@@ -1,8 +1,8 @@
 """
 Basic serializers for unserializable stdlib classes
 """
-from .registration import serializer, deserializer
-from .exceptions import MagicJsonError
+from ..registration import serializer, deserializer
+from ..exceptions import MagicJsonError
 
 
 def register_path_serializer():
@@ -17,9 +17,15 @@ def register_path_serializer():
         return Path(data)
 
 
-def register_dataclass_serializer():
+def register_dataclass_serializer(strict=True):
+    """
+
+    :param strict: True: MagicJson error if a deserialization method does not exist
+                   False: Return a dictionary if a deserialization method does not exist
+    :return:
+    """
     from dataclasses import is_dataclass, fields
-    from .tools import dataclass_register
+    from .dataclasses import dataclass_register
 
     @serializer(identifier=is_dataclass, deserializer_name='dataclass')
     def serialize_dataclass(dc):
@@ -36,8 +42,11 @@ def register_dataclass_serializer():
         if class_name in dataclass_register:
             cls = dataclass_register[class_name]
         else:
-            raise MagicJsonError(
-                f"Could not find dataclass matching {class_name} to deserialize.",
-                "@magicjson_dataclass decorator must be applied to class definition."
-            )
+            if strict:
+                raise MagicJsonError(
+                    f"Could not find dataclass matching {class_name} to deserialize.",
+                    "@magicjson_dataclass decorator must be applied to class definition."
+                )
+            else:
+                return data
         return cls(**data)
