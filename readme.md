@@ -1,5 +1,8 @@
 # MagicJSON #
-Easy handling of JSON serialization/deserialization of python objects. 
+Easy handling of JSON serialization/deserialization of python objects.
+
+I thought this would use magic __ methods but decorators were more flexible
+and now this might need a better name.
 
 If you want your JSON decoding to be fast this module is not for you.
 If you want to be able to round-trip python objects to JSON and back

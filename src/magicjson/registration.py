@@ -25,7 +25,7 @@ def serializer(*, cls: type, identifier: typing.Callable[[object], bool]):
     :param identifier: identifier to use for identifier(obj) checks
     :return:
     """
-    def wrapper(func: callable) -> native_serializable:
+    def wrapper(func: callable):
         serialize_register.append((cls, func))
         return func
     return wrapper
