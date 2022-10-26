@@ -54,7 +54,11 @@ def serializer(
     return wrapper
 
 
-def deserializer(*, cls: type, name: str = None):
+def deserializer(
+        *,
+        cls: type = None,
+        name: str = None
+):
     """
     :param cls: Class to be serialized
     :param name: Name to use to look up deserialization method (default is the class name if provided)
