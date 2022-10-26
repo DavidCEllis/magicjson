@@ -1,7 +1,7 @@
 """
 Registers for class serialization/deserialization
 """
-from typing import Optional, Callable, Union, NamedTuple
+from typing import Any, Optional, Callable, Union, NamedTuple
 
 from .exceptions import RegistrationError
 
@@ -9,10 +9,10 @@ from .exceptions import RegistrationError
 native_serializable = Union[None, bool, int, float, str, list, dict]
 
 # Register of classes and functions to call when serializing
-serialize_register: list[tuple[type, Callable]] = []
+serialize_register: list["SerializerInfo"] = []
 
 # Map from aliases to methods to deserialize
-deserialize_register: dict[str, Callable] = {}
+deserialize_register: dict[str, Callable[[native_serializable], Any]] = {}
 
 
 class SerializerInfo(NamedTuple):

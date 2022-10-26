@@ -6,7 +6,8 @@ from decimal import Decimal
 
 
 def test_serialize_register():
-    assert len(serialize_register) == 2
+    assert serialize_register[0].deserializer_name == 'Path'
+    assert serialize_register[1].deserializer_name == 'Decimal'
 
 
 def test_deserialize_methods():
