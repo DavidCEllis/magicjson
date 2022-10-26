@@ -19,6 +19,7 @@ def register_path_serializer():
 
 def register_dataclass_serializer():
     from dataclasses import is_dataclass, fields
+    from .tools import dataclass_register
 
     @serializer(identifier=is_dataclass, deserializer_name='dataclass')
     def serialize_dataclass(dc):
@@ -31,16 +32,12 @@ def register_dataclass_serializer():
 
     @deserializer(name='dataclass')
     def deserialize_dataclass(data):
-        import inspect
         class_name = data.pop('__class__.__name__')
-        # Inspect up the stack for a dataclass matching this name
-        for level in inspect.stack():
-            if class_name in level.frame.f_locals:
-                tmp_cls = level.frame.f_locals[class_name]
-                if is_dataclass(tmp_cls):
-                    cls = tmp_cls
-                    break
+        if class_name in dataclass_register:
+            cls = dataclass_register[class_name]
         else:
-            raise MagicJsonError(f"Could not find dataclass matching {class_name} to deserialize to.")
-
+            raise MagicJsonError(
+                f"Could not find dataclass matching {class_name} to deserialize.",
+                "@magicjson_dataclass decorator must be applied to class definition."
+            )
         return cls(**data)
