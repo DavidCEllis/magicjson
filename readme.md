@@ -1,5 +1,5 @@
 # MagicJSON #
-Easy handling of JSON serialisation and deserialisation of python objects.
+Easy handling of JSON serialization and deserialization of python objects.
 
 I thought this would use magic __ methods but decorators were more flexible
 and now this might need a better name.
