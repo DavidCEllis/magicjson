@@ -12,8 +12,8 @@ native_serializable = typing.Union[None, bool, int, float, str, list, dict]
 
 def loads(data: str, method=None, **kwargs):
     if method is None:
-        from json import loads
-        method = loads
+        import json
+        method = json.loads
 
     pydata = method(data, **kwargs)
     return deserialize(pydata)
