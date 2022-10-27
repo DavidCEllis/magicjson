@@ -4,7 +4,7 @@ from contextlib import contextmanager
 
 from magicjson import dumps, loads
 from magicjson.registration import clear_registers
-from magicjson.tools.stdlib_serializers import register_path_serializer
+from magicjson.stdlib_serializers import register_path_serializer
 
 
 @contextmanager

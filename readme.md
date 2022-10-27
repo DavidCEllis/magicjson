@@ -94,8 +94,9 @@ Output:
 from dataclasses import dataclass
 
 from magicjson import dumps, loads
-from magicjson.tools.stdlib_serializers import register_path_serializer, register_dataclass_serializer
-from magicjson.tools.dataclasses import magicjson_dataclass
+from magicjson.stdlib_serializers import (
+    register_path_serializer, register_dataclass_serializer, magicjson_dataclass
+)
 
 # builtin dataclass and path serializers
 register_dataclass_serializer()

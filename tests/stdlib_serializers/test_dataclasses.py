@@ -3,8 +3,8 @@ from dataclasses import dataclass
 from contextlib import contextmanager
 
 from magicjson import dumps, loads
-from magicjson.tools.stdlib_serializers import register_dataclass_serializer
-from magicjson.tools.dataclasses import magicjson_dataclass, dataclass_register
+from magicjson.stdlib_serializers import register_dataclass_serializer, magicjson_dataclass
+from magicjson.stdlib_serializers.dataclasses import dataclass_register
 from magicjson.registration import clear_registers
 from magicjson.exceptions import MagicJSONError
 

@@ -1,20 +1,17 @@
 """
-Basic serializers for unserializable stdlib classes
+Dataclass register in order to deserialize dataclasses.
 """
-from ..registration import serializer, deserializer
-from ..exceptions import MagicJSONError
+from magicjson import serializer, deserializer
+from magicjson.exceptions import MagicJSONError
+
+dataclass_register: dict[str, type] = {}
 
 
-def register_path_serializer():
-    from pathlib import Path
-
-    @serializer(cls=Path)
-    def serialize_path(pth: Path):
-        return str(pth)
-
-    @deserializer(cls=Path)
-    def deserialize_path(data: str):
-        return Path(data)
+def magicjson_dataclass(cls):
+    if cls.__name__ in dataclass_register:
+        raise MagicJSONError(f"Dataclass with name {cls.__name__} already in dataclass registry")
+    dataclass_register[cls.__name__] = cls
+    return cls
 
 
 def register_dataclass_serializer(strict=True):
@@ -24,8 +21,8 @@ def register_dataclass_serializer(strict=True):
                    False: Return a dictionary if a deserialization method does not exist
     :return:
     """
+    # Lazy import
     from dataclasses import is_dataclass, fields
-    from .dataclasses import dataclass_register
 
     @serializer(identifier=is_dataclass, deserializer_name='dataclass')
     def serialize_dataclass(dc):
