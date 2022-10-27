@@ -1,6 +1,12 @@
 """
 This is a basic single file serializer that only handles adding methods
-to convert to JSON and does not deal with
+to convert to JSON and does not deal with deserialization.
+
+Example usage in the if __name__ == '__main__' block.
+
+While the asdict function of dataclasses provides recursion through the
+dataclass, this is not necessary as the json module is already going to
+do that and will also handle going through any other containers.
 """
 from typing import Callable, Optional
 
