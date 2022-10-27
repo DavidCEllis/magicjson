@@ -2,7 +2,11 @@ from magicjson import serializer, dumps
 from smalltest.tools import raises
 
 
-def test_direct_conversion():
+def test_no_identifier():
+    """
+    Bug/Bugfix
+    Serializers with no deserializer shouldn't try to convert everything
+    """
     class Test1:
         def __init__(self, x, y):
             self.x, self.y = x, y
