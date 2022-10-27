@@ -1,14 +1,25 @@
 import json
+from contextlib import contextmanager
 
 from smalltest.tools import raises
 
 from magicjson import __version__, dumps
-from magicjson.registration import serializer, serialize_register
+from magicjson.registration import serializer, serialize_register, deserialize_register
 
 
-def test_object_dumps():
+@contextmanager
+def register_cleanup():
     serialize_register.clear()
+    deserialize_register.clear()
+    try:
+        yield
+    finally:
+        deserialize_register.clear()
+        serialize_register.clear()
 
+
+@register_cleanup()
+def test_object_dumps():
     version = __version__
 
     class Serializable:
@@ -46,11 +57,10 @@ def test_object_dumps():
         "Second": {"x": 2}
     }
     assert dumps(serialize_data) == json.dumps(expected_data)
-    serialize_register.clear()
 
 
+@register_cleanup()
 def test_failure():
-    serialize_register.clear()
 
     class Unserializable:
         def __init__(self, x):
@@ -61,5 +71,3 @@ def test_failure():
 
     with raises(TypeError) as e_info:
         dumps([Unserializable(1)])
-
-    serialize_register.clear()

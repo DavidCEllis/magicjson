@@ -1,15 +1,24 @@
+from pathlib import Path
+from contextlib import contextmanager
+
 from magicjson import loads, deserializer, __version__
 from magicjson.registration import deserialize_register
 from magicjson.exceptions import MissingDeserializerError
 
 from smalltest.tools import raises
 
-from pathlib import Path
 
-
-def test_deserialize_basic():
+@contextmanager
+def register_cleanup():
     deserialize_register.clear()
+    try:
+        yield
+    finally:
+        deserialize_register.clear()
 
+
+@register_cleanup()
+def test_deserialize_basic():
     fake_path = "usr/bin/python"
 
     data = (f'{{'
@@ -26,12 +35,9 @@ def test_deserialize_basic():
 
     assert loads(data) == {"obj1": Path(fake_path)}
 
-    deserialize_register.clear()
 
-
+@register_cleanup()
 def test_deserialize_fail():
-    deserialize_register.clear()
-
     fake_path = "usr/bin/python"
 
     data = (f'{{'
@@ -46,8 +52,8 @@ def test_deserialize_fail():
         _ = loads(data)
 
 
+@register_cleanup()
 def test_deserialize_list():
-    deserialize_register.clear()
     fake_path = 'usr/bin/python'
     fake_path2 = 'usr/bin/python2'
 

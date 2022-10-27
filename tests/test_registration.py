@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from magicjson.registration import (
     serializer, deserializer, serialize_register,
     deserialize_register, SerializerInfo, RegistrationError
@@ -5,10 +7,20 @@ from magicjson.registration import (
 from smalltest.tools import raises
 
 
+@contextmanager
+def register_cleanup():
+    serialize_register.clear()
+    deserialize_register.clear()
+    try:
+        yield
+    finally:
+        deserialize_register.clear()
+        serialize_register.clear()
+
+
+@register_cleanup()
 def test_add_serializer():
     from pathlib import Path
-    # Start with a clear list
-    serialize_register.clear()
 
     method = lambda obj: isinstance(obj, Path)
 
@@ -18,12 +30,9 @@ def test_add_serializer():
 
     assert serialize_register == [SerializerInfo(method, serialize_path, None)]
 
-    serialize_register.clear()
 
-
+@register_cleanup()
 def test_add_serializer_cls():
-    serialize_register.clear()
-
     from pathlib import Path
 
     @serializer(cls=Path)
@@ -33,12 +42,9 @@ def test_add_serializer_cls():
     assert serialize_register[0].serializer_method == serialize_path
     assert serialize_register[0].deserializer_name == 'Path'
 
-    serialize_register.clear()
 
-
+@register_cleanup()
 def test_add_serializer_errors():
-    serialize_register.clear()
-
     with raises(TypeError) as e_info:
         @serializer(identifier=lambda obj: True, cls=object)
         def fake_serialize(obj):
@@ -49,13 +55,10 @@ def test_add_serializer_errors():
         def fake_serialize(obj):
             pass
 
-    serialize_register.clear()
 
-
+@register_cleanup()
 def test_add_deserializer():
     from pathlib import Path
-    # Start with a clear dict
-    deserialize_register.clear()
 
     @deserializer(name='Path')
     def deserialize_path(data):
@@ -63,12 +66,10 @@ def test_add_deserializer():
 
     assert deserialize_register['Path'] == deserialize_path
 
-    deserialize_register.clear()
 
-
+@register_cleanup()
 def test_double_deserializer_error():
     from pathlib import Path
-    deserialize_register.clear()
 
     @deserializer(cls=Path)
     def deserialize_path(data):

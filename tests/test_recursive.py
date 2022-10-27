@@ -1,8 +1,23 @@
+from contextlib import contextmanager
+
 from magicjson import serializer, deserializer, dumps, loads
+from magicjson.registration import serialize_register, deserialize_register
 
 from smalltest.tools import raises
 
 
+@contextmanager
+def register_cleanup():
+    serialize_register.clear()
+    deserialize_register.clear()
+    try:
+        yield
+    finally:
+        deserialize_register.clear()
+        serialize_register.clear()
+
+
+@register_cleanup()
 def test_recursive():
     """Test conversions that go through multiple serializers"""
     # Here the Test1 object defines its serializable form as Test2
@@ -41,6 +56,7 @@ def test_recursive():
     assert example == loads(dumps(example))
 
 
+register_cleanup()
 def test_failed_recursive():
     """Test conversions try to go through multiple serializers"""
 
