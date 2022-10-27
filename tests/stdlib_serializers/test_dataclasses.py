@@ -26,6 +26,19 @@ def register_cleanup():
 
 
 @register_cleanup()
+def test_serialize_unregistered():
+    """If a dataclass is not registered, serialize to plain dict"""
+    register_dataclass_serializer()
+
+    @dataclass
+    class X:
+        x: int = 42
+        y: str = "apples"
+
+    assert dumps(X()) == dumps({'x': 42, 'y': 'apples'})
+
+
+@register_cleanup()
 def test_basic_dataclass_roundtrip():
     register_dataclass_serializer()
 
