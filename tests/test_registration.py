@@ -5,7 +5,11 @@ from magicjson.registration import (
     deserialize_register, SerializerInfo, RegistrationError,
     clear_registers
 )
-from smalltest.tools import raises
+
+try:
+    from smalltest.tools import raises
+except ImportError:
+    from pytest import raises
 
 
 @contextmanager

@@ -8,7 +8,10 @@ from magicjson.tools.dataclasses import magicjson_dataclass, dataclass_register
 from magicjson.registration import clear_registers
 from magicjson.exceptions import MagicJSONError
 
-from smalltest.tools import raises
+try:
+    from smalltest.tools import raises
+except ImportError:
+    from pytest import raises
 
 
 @contextmanager

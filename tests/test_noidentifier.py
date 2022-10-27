@@ -2,7 +2,11 @@ from contextlib import contextmanager
 
 from magicjson import serializer, dumps
 from magicjson.registration import clear_registers
-from smalltest.tools import raises
+
+try:
+    from smalltest.tools import raises
+except ImportError:
+    from pytest import raises
 
 
 @contextmanager
