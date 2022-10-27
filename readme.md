@@ -75,12 +75,12 @@ Output:
 ```
 {
   "test1": {
-    "_magicjson": "0.0.1a",
+    "_magicjson": "0.1.0",
     "_deserializer": "Path",
     "contents": "test1"
   },
   "test2": {
-    "_magicjson": "0.0.1a",
+    "_magicjson": "0.1.0",
     "_deserializer": "Path",
     "contents": "test2"
   }
@@ -127,12 +127,12 @@ print(f"{(circle_restored == basic_circle)=}")
 Output:
 ```
 {
-  "_magicjson": "0.0.1a",
+  "_magicjson": "0.1.0",
   "_deserializer": "dataclass",
   "contents": {
     "radius": 1.0,
     "origin": {
-      "_magicjson": "0.0.1a",
+      "_magicjson": "0.1.0",
       "_deserializer": "dataclass",
       "contents": {
         "x": 0.0,
