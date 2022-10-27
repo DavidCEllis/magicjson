@@ -18,9 +18,11 @@ jobs:
         test-lib: ["pytest", "smalltest"]
         include:
           - test-lib: "pytest"
-            test-pip: "pytest"
+            test-pip: "pytest pytest-cov"
+            test-command: "pytest --cov=magicjson"
           - test-lib: "smalltest"
             test-pip: "git+https://github.com/DavidCEllis/smalltest.git"
+            test-command: "smalltest"
 
     steps:
     - uses: actions/checkout@v3
@@ -36,4 +38,4 @@ jobs:
         python -m pip install -e .
     - name: Test with ${{ matrix.test-lib }}
       run: |
-        ${{ matrix.test-lib }}
+        ${{ matrix.test-command }}
