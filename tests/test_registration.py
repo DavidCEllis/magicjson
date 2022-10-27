@@ -2,20 +2,19 @@ from contextlib import contextmanager
 
 from magicjson.registration import (
     serializer, deserializer, serialize_register,
-    deserialize_register, SerializerInfo, RegistrationError
+    deserialize_register, SerializerInfo, RegistrationError,
+    clear_registers
 )
 from smalltest.tools import raises
 
 
 @contextmanager
 def register_cleanup():
-    serialize_register.clear()
-    deserialize_register.clear()
+    clear_registers()
     try:
         yield
     finally:
-        deserialize_register.clear()
-        serialize_register.clear()
+        clear_registers()
 
 
 @register_cleanup()

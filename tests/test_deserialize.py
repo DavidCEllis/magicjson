@@ -2,7 +2,7 @@ from pathlib import Path
 from contextlib import contextmanager
 
 from magicjson import loads, deserializer, __version__
-from magicjson.registration import deserialize_register
+from magicjson.registration import clear_registers
 from magicjson.exceptions import MissingDeserializerError
 
 from smalltest.tools import raises
@@ -10,11 +10,11 @@ from smalltest.tools import raises
 
 @contextmanager
 def register_cleanup():
-    deserialize_register.clear()
+    clear_registers()
     try:
         yield
     finally:
-        deserialize_register.clear()
+        clear_registers()
 
 
 @register_cleanup()
