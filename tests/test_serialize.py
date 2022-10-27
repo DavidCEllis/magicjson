@@ -5,7 +5,7 @@ from magicjson import __version__, dumps
 from magicjson.registration import serializer, clear_registers
 
 try:
-    from smalltest import raises
+    from smalltest.tools import raises
 except ImportError:
     from pytest import raises
 
