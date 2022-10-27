@@ -6,7 +6,7 @@ from magicjson import dumps, loads
 from magicjson.stdlib_serializers import register_dataclass_serializer, magicjson_dataclass
 from magicjson.stdlib_serializers.dataclasses import dataclass_register
 from magicjson.registration import clear_registers
-from magicjson.exceptions import MagicJSONError
+from magicjson.exceptions import RegistrationError
 
 try:
     from smalltest.tools import raises
@@ -35,7 +35,11 @@ def test_serialize_unregistered():
         x: int = 42
         y: str = "apples"
 
-    assert dumps(X()) == dumps({'x': 42, 'y': 'apples'})
+    with raises(RegistrationError) as e_info:
+        dumps(X())
+
+    assert e_info.value.args[0] == f"Dataclass X not in serialization registry."
+    assert e_info.value.args[1] == "@magicjson_dataclass decorator must be applied to class definition."
 
 
 @register_cleanup()
@@ -107,7 +111,7 @@ def test_matching_name_error():
     class Apple:
         x: int
 
-    with raises(MagicJSONError) as e_info:
+    with raises(RegistrationError) as e_info:
         @magicjson_dataclass
         @dataclass
         class Apple:
@@ -131,28 +135,8 @@ def test_deserialize_failure():
     # Simulate loading in a separate instance by clearing the dataclass register
     dataclass_register.clear()
 
-    with raises(MagicJSONError) as e_info:
+    with raises(RegistrationError) as e_info:
         reload = loads(json_x)
 
     assert e_info.value.args[0] == "Could not find dataclass matching X to deserialize."
     assert e_info.value.args[1] == "@magicjson_dataclass decorator must be applied to class definition."
-
-
-@register_cleanup()
-def test_deserialize_non_strict():
-    register_dataclass_serializer(strict=False)
-
-    @magicjson_dataclass
-    @dataclass
-    class X:
-        data: str = "test"
-
-    test_x = X()
-    json_x = dumps(test_x)
-
-    # Simulate loading in a separate instance by clearing the dataclass register
-    dataclass_register.clear()
-
-    # in non-strict mode, dataclasses would reserialize to plain dicts
-    reload = loads(json_x)
-    assert reload == {"data": "test"}
