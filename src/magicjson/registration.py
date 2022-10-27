@@ -1,18 +1,15 @@
 """
 Registers for class serialization/deserialization
 """
-from typing import Any, Optional, Callable, Union, NamedTuple
+from typing import Any, Optional, Callable, NamedTuple
 
 from .exceptions import RegistrationError
-
-# Types natively serializable by the stdlib json moddule
-native_serializable = Union[None, bool, int, float, str, list, dict]
 
 # Register of classes and functions to call when serializing
 serialize_register: list["SerializerInfo"] = []
 
 # Map from aliases to methods to deserialize
-deserialize_register: dict[str, Callable[[native_serializable], Any]] = {}
+deserialize_register: dict[str, Callable] = {}
 
 
 def clear_registers():
@@ -22,7 +19,7 @@ def clear_registers():
 
 class SerializerInfo(NamedTuple):
     identifier: Callable[[object], bool]
-    serializer_method: Callable[[object], native_serializable]
+    serializer_method: Callable[[object], Any]
     deserializer_name: Optional[str]
 
 
@@ -53,7 +50,7 @@ def serializer(
         if deserialize_auto and not deserializer_name:
             deserializer_name = cls.__name__
 
-    def wrapper(func: callable):
+    def wrapper(func: Callable):
         serialize_register.append(SerializerInfo(identifier, func, deserializer_name))
         return func
     return wrapper
