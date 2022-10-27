@@ -15,6 +15,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.11"]
+        test-lib: ["pytest", "smalltest"]
+        include:
+          - test-lib: "pytest"
+            test-pip: "pytest"
+          - test-lib: "smalltest"
+            test-pip: "git+https://github.com/DavidCEllis/smalltest.git"
 
     steps:
     - uses: actions/checkout@v3
@@ -25,9 +31,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install git+https://github.com/DavidCEllis/smalltest.git
+        python -m pip install ${{ matrix.test-pip }}
         python -m pip install coverage
         python -m pip install -e .
-    - name: Test with smalltest
+    - name: Test with ${{ matrix.test-lib }}
       run: |
-        smalltest
+        ${{ matrix.test-lib }}
