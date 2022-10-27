@@ -6,12 +6,9 @@ from typing import Union
 from . import __version__
 from .registration import serialize_register
 
-# Types natively serializable by the stdlib json moddule
-native_serializable = Union[None, bool, int, float, str, list, dict]
-
 
 # default method to provide to json.dumps (or equivalent) to serialize objects
-def default(o) -> native_serializable:
+def default(o):
     for identifier, method, deserializer_name in serialize_register:
         if identifier(o):
             if deserializer_name:
