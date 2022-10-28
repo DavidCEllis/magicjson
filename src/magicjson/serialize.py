@@ -1,15 +1,15 @@
 """
 Methods for converting python objects to JSON
 """
-from typing import Union
-
 from . import __version__
 from .registration import serialize_register
 
 
 # default method to provide to json.dumps (or equivalent) to serialize objects
 def default(o):
-    for identifier, method, deserializer_name in serialize_register:
+    # Reverse the order so serializers registered later will be used first
+    # Making it easier to 'override' an existing serializer
+    for identifier, method, deserializer_name in reversed(serialize_register):
         if identifier(o):
             if deserializer_name:
                 result = {
