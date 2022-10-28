@@ -16,7 +16,7 @@ def magicjson_dataclass(cls):
 
 def register_dataclass_serializer():
     """
-    Register the default dataclass serializer with magicjson
+    Register the default dataclass serializer and deserializer with magicjson
     """
     # Lazy import
     from dataclasses import is_dataclass, fields
