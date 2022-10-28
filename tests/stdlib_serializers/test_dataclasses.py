@@ -1,6 +1,7 @@
 """Test more complicated round trips"""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from contextlib import contextmanager
+import json
 
 from magicjson import dumps, loads
 from magicjson.stdlib_serializers import register_dataclass_serializer, magicjson_dataclass
@@ -100,6 +101,30 @@ def test_layered_dataclass_roundtrip():
     assert loads(dumps(x2)) == x2
     assert loads(dumps(datalist)) == datalist
     assert loads(dumps(datadict)) == datadict
+
+
+@register_cleanup()
+def test_value_not_in_init():
+    register_dataclass_serializer()
+
+    @magicjson_dataclass
+    @dataclass
+    class X:
+        x: int
+        y: int = field(default=12, init=False)
+
+    testdc = X(42)
+    testdc.y = 360
+
+    test_json = dumps(testdc)
+    test_recon = loads(test_json)
+
+    assert test_recon.x == 42
+    assert test_recon.y == 12  # Y should not be restored as it is not in INIT
+
+    # Double check y is in the exclude_init_fields param
+    data = json.loads(test_json)
+    assert data['contents']['_exclude_init_fields'] == ['y']
 
 
 @register_cleanup()

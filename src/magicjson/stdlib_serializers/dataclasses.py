@@ -14,12 +14,9 @@ def magicjson_dataclass(cls):
     return cls
 
 
-def register_dataclass_serializer(strict=True):
+def register_dataclass_serializer():
     """
-
-    :param strict: True: MagicJson error if a deserialization method does not exist
-                   False: Return a dictionary if a deserialization method does not exist
-    :return:
+    Register the default dataclass serializer with magicjson
     """
     # Lazy import
     from dataclasses import is_dataclass, fields
@@ -39,6 +36,9 @@ def register_dataclass_serializer(strict=True):
         }
         data['__class__.__name__'] = class_name
 
+        # Keep track of fields that are not in INIT
+        data['_exclude_init_fields'] = [f.name for f in fields(dc) if not f.init]
+
         return data
 
     @deserializer(name='dataclass')
@@ -51,4 +51,7 @@ def register_dataclass_serializer(strict=True):
                 f"Could not find dataclass matching {class_name} to deserialize.",
                 "@magicjson_dataclass decorator must be applied to class definition."
             )
+        exclude_fields = data.pop('_exclude_init_fields')
+        for fieldname in exclude_fields:
+            del data[fieldname]
         return cls(**data)
