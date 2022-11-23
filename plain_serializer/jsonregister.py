@@ -8,24 +8,26 @@ While the asdict function of dataclasses provides recursion through the
 dataclass, this is not necessary as the json module is already going to
 do that and will also handle going through any other containers.
 """
-from typing import Callable, Optional
+from typing import Optional
+from collections.abc import Callable, Iterable
 
 
 class JSONRegister:
-    def __init__(self, dumps_func=None):
+    def __init__(self, *, dumps_func: Callable[..., str] = None):
         self.serializer_registry = []
 
         if dumps_func is None:
             import json
+
             self.dumps_func = json.dumps
         else:
             self.dumps_func = dumps_func
 
     def serializer(
-            self,
-            *,
-            identifier: Optional[Callable[[object], bool]] = None,
-            cls: Optional[type] = None,
+        self,
+        *,
+        identifier: Optional[Callable[[object], bool]] = None,
+        cls: Optional[type] = None,
     ):
         """
         Given an identifier OR a class object (type), register a
@@ -55,11 +57,13 @@ class JSONRegister:
             if identifier(o):
                 return method(o)
         else:
-            raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+            raise TypeError(
+                f"Object of type {o.__class__.__name__} is not JSON serializable"
+            )
 
-    def dumps(self, data, **kwargs) -> str:
-        if 'default' in kwargs:
-            default = kwargs.pop('default')
+    def dumps(self, obj, **kwargs) -> str:
+        if "default" in kwargs:
+            default = kwargs.pop("default")
 
             def metadefault(o):
                 try:
@@ -67,9 +71,24 @@ class JSONRegister:
                 except TypeError:
                     return self.default(o)
 
-            return self.dumps_func(data, default=metadefault, **kwargs)
+            return self.dumps_func(obj, default=metadefault, **kwargs)
         else:
-            return self.dumps_func(data, default=self.default, **kwargs)
+            return self.dumps_func(obj, default=self.default, **kwargs)
+
+    @classmethod
+    def combined_register(
+        cls, registries: Iterable["JSONRegister"], *, dumps_func: Callable[..., str] = None
+    ):
+        """
+        Combine multiple JSONRegisters into one in the order given.
+
+        :param registries: iterable/list of JSONRegister instances
+        :param dumps_func:
+        :return:
+        """
+        new_register = cls(dumps_func=dumps_func)
+        for registry in registries:
+            new_register.serializer_registry.extend(registry.serializer_registry)
 
 
 if __name__ == "__main__":
@@ -79,20 +98,15 @@ if __name__ == "__main__":
 
     json_register = JSONRegister()
 
-
     @json_register.serializer(identifier=is_dataclass)
     def serialize_dataclasses(dc):
         # Don't use asdict, no need to recurse here
-        data = {
-            f.name: getattr(dc, f.name)
-            for f in fields(dc)
-        }
+        data = {f.name: getattr(dc, f.name) for f in fields(dc)}
         return data
 
     @json_register.serializer(cls=Path)
     def serialize_path(pth):
         return str(pth)
-
 
     @dataclass
     class FilePath:
@@ -101,12 +115,12 @@ if __name__ == "__main__":
 
     @dataclass
     class Onion:
-        """Extra layer to demonstrate recursion"""
+        # Extra layer to demonstrate recursion
         layer: FilePath
 
     fp = {
-        "Python3.10": Onion(FilePath('python', Path('/usr/bin'))),
-        "Python3.11": Onion(FilePath('python', Path('/usr/bin'))),
+        "Python3.10": Onion(FilePath("python", Path("/usr/bin"))),
+        "Python3.11": Onion(FilePath("python", Path("/usr/bin"))),
     }
 
     print(json_register.dumps(fp))
