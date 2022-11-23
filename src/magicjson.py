@@ -10,10 +10,10 @@ class RegisterError(Exception):
 
 class SerializerInfo:
     def __init__(
-            self,
-            identifier: Callable[[object], bool],
-            method: Callable[[object], Any],
-            name: Optional[str] = None,
+        self,
+        identifier: Callable[[object], bool],
+        method: Callable[[object], Any],
+        name: Optional[str] = None,
     ):
         self.identifier = identifier
         self.method = method
@@ -24,7 +24,11 @@ class SerializerInfo:
 
     def __eq__(self, other):
         if self.__class__ is other.__class__:
-            return (self.identifier, self.method, self.name) == (other.identifier, other.method, other.name)
+            return (self.identifier, self.method, self.name) == (
+                other.identifier,
+                other.method,
+                other.name,
+            )
         return NotImplemented
 
     def __iter__(self):
@@ -45,10 +49,10 @@ class JSONRegister:
 
     # Registration Methods
     def register_encoder(
-            self,
-            identifier: Callable[[object], bool],
-            method: Callable[[object], Any],
-            name: Optional[str] = None,
+        self,
+        identifier: Callable[[object], bool],
+        method: Callable[[object], Any],
+        name: Optional[str] = None,
     ):
         """
         Register a serialization method
@@ -58,16 +62,14 @@ class JSONRegister:
         :param method: function to use to serialize identified objects
         :param name: Name for a deserializer to recreate the original object
         """
-        self.encoder_register.append(
-            SerializerInfo(identifier, method, name)
-        )
+        self.encoder_register.append(SerializerInfo(identifier, method, name))
 
     def register_cls_encoder(
-            self,
-            cls: type,
-            method: Callable[[object], Any],
-            name: Optional[str] = None,
-            auto_name: bool = True
+        self,
+        cls: type,
+        method: Callable[[object], Any],
+        name: Optional[str] = None,
+        auto_name: bool = True,
     ):
         """
         Register a serialization method for a class
@@ -81,29 +83,29 @@ class JSONRegister:
         identifier = lambda obj: isinstance(obj, cls)
         if name is None and auto_name:
             name = cls.__name__
-        self.encoder_register.append(
-            SerializerInfo(identifier, method, name)
-        )
+        self.encoder_register.append(SerializerInfo(identifier, method, name))
 
     def encoder(
-            self,
-            identifier: Callable[[object], bool],
-            name: Optional[str] = None,
+        self,
+        identifier: Callable[[object], bool],
+        name: Optional[str] = None,
     ):
         def wrapper(method: Callable[[object], Any]):
             self.register_encoder(identifier, method, name)
             return method
+
         return wrapper
 
     def cls_encoder(
-            self,
-            cls: type,
-            name: Optional[str] = None,
-            auto_name: bool = True,
+        self,
+        cls: type,
+        name: Optional[str] = None,
+        auto_name: bool = True,
     ):
         def wrapper(method: Callable[[object], Any]):
             self.register_cls_encoder(cls, method, name, auto_name)
             return method
+
         return wrapper
 
     def register_decoder(self, name, method):
@@ -119,12 +121,14 @@ class JSONRegister:
         def wrapper(method):
             self.register_decoder(name, method)
             return method
+
         return wrapper
 
     def cls_decoder(self, cls):
         def wrapper(method):
             self.register_cls_decoder(cls, method)
             return method
+
         return wrapper
 
     def default(self, o):
@@ -145,11 +149,13 @@ class JSONRegister:
                     result = method(o)
                 return result
 
-        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+        raise TypeError(
+            f"Object of type {o.__class__.__name__} is not JSON serializable"
+        )
 
     def reconstruct(self, data):
         if isinstance(data, dict):
-            if '_magicjson' in data:
+            if "_magicjson" in data:
                 # First deserialize anything further down the chain
                 converted_data = self.reconstruct(data["contents"])
                 # Then use the stored method to convert back to python
@@ -172,16 +178,20 @@ class JSONRegister:
     def dumps(self, obj, **kwargs):
         if self.jsonlib is None:
             import json
+
             self.jsonlib = json
 
-        if 'default' in kwargs:
-            raise TypeError("JSONRegister.dump does not support the use of additional default functions")
+        if "default" in kwargs:
+            raise TypeError(
+                "JSONRegister.dump does not support the use of additional default functions"
+            )
 
         return self.jsonlib.dumps(obj, default=self.default, **kwargs)
 
     def loads(self, s, **kwargs):
         if self.jsonlib is None:
             import json
+
             self.jsonlib = json
 
         pydata = self.jsonlib.loads(s, **kwargs)
