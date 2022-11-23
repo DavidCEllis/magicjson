@@ -1,25 +1,15 @@
-from contextlib import contextmanager
+import json
 
-from magicjson import serializer, dumps
-from magicjson.registration import clear_registers
+from magicjson import JSONRegister
+
 
 from pytest import raises
 
 
-@contextmanager
-def register_cleanup():
-    clear_registers()
-    try:
-        yield
-    finally:
-        clear_registers()
-
-
-@register_cleanup()
 def test_no_identifier():
     """
     Bug/Bugfix
-    Serializers with no deserializer shouldn't try to convert everything
+    Only serialize the correct object
     """
     class Test1:
         def __init__(self, x, y):
@@ -29,14 +19,16 @@ def test_no_identifier():
         def __init__(self, x, y):
             self.x, self.y = x, y
 
-    @serializer(cls=Test2, deserialize_auto=False)
+    register = JSONRegister()
+
+    @register.cls_serializer(cls=Test2, auto_name=False)
     def serialize_test2(obj):
         return {'x': obj.x, 'y': obj.y}
 
     testobj = Test1(42, 'apples')
 
     with raises(TypeError) as e_info:
-        _ = dumps(testobj)
+        _ = json.dumps(testobj, default=register.default)
 
     error = "Object of type Test1 is not JSON serializable"
 
