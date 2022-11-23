@@ -6,10 +6,7 @@ from magicjson.registration import (
     clear_registers
 )
 
-try:
-    from smalltest.tools import raises
-except ImportError:
-    from pytest import raises
+from pytest import raises
 
 
 @contextmanager

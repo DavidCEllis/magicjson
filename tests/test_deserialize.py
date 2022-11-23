@@ -5,10 +5,7 @@ from magicjson import loads, deserializer, __version__
 from magicjson.registration import clear_registers
 from magicjson.exceptions import MissingDeserializerError
 
-try:
-    from smalltest.tools import raises
-except ImportError:
-    from pytest import raises
+from pytest import raises
 
 
 @contextmanager

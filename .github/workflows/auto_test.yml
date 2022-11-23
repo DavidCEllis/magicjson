@@ -15,14 +15,12 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: ["3.11"]
-        test-lib: ["pytest", "smalltest"]
+        test-lib: ["pytest"]
         include:
           - test-lib: "pytest"
             test-pip: "pytest pytest-cov"
             test-command: "pytest --cov=magicjson"
-          - test-lib: "smalltest"
-            test-pip: "git+https://github.com/DavidCEllis/smalltest.git"
-            test-command: "smalltest"
+
 
     steps:
     - uses: actions/checkout@v3

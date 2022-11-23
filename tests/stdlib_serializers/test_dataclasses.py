@@ -9,10 +9,7 @@ from magicjson.stdlib_serializers.dataclasses import dataclass_register
 from magicjson.registration import clear_registers
 from magicjson.exceptions import RegistrationError
 
-try:
-    from smalltest.tools import raises
-except ImportError:
-    from pytest import raises
+from pytest import raises
 
 
 @contextmanager
