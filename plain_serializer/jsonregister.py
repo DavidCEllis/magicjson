@@ -10,50 +10,66 @@ do that and will also handle going through any other containers.
 """
 from typing import Callable, Optional
 
-serializer_registry = []
 
+class JSONRegister:
+    def __init__(self, dumps_func=None):
+        self.serializer_registry = []
 
-def serializer(
-        *,
-        identifier: Optional[Callable[[object], bool]] = None,
-        cls: Optional[type] = None,
-):
-    """
-    Given an identifier OR a class object (type), register a
-    serialization method for the objects
+        if dumps_func is None:
+            import json
+            self.dumps_func = json.dumps
+        else:
+            self.dumps_func = dumps_func
 
-    :param identifier: Method to identify serializable objects
-    :param cls: Class to serialize
-    :return:
-    """
-    if cls and identifier:
-        raise TypeError("serializer requires an identifier XOR a class, not both")
-    elif not (cls or identifier):
-        raise TypeError("serializer requires either a cls or an identifier")
+    def serializer(
+            self,
+            *,
+            identifier: Optional[Callable[[object], bool]] = None,
+            cls: Optional[type] = None,
+    ):
+        """
+        Given an identifier OR a class object (type), register a
+        serialization method for the objects
 
-    # the cls method is just convenience for isinstance identifiers
-    if cls:
-        identifier = lambda obj: isinstance(obj, cls)
+        :param identifier: Method to identify serializable objects
+        :param cls: Class to serialize
+        :return:
+        """
+        if cls and identifier:
+            raise TypeError("serializer requires an identifier XOR a class, not both")
+        elif not (cls or identifier):
+            raise TypeError("serializer requires either a cls or an identifier")
 
-    def wrapper(func: Callable):
-        serializer_registry.append((identifier, func))
-        return func
-    return wrapper
+        # the cls method is just convenience for isinstance identifiers
+        if cls:
+            identifier = lambda obj: isinstance(obj, cls)
 
+        def wrapper(func: Callable):
+            self.serializer_registry.append((identifier, func))
+            return func
 
-def default(o):
-    for identifier, method in serializer_registry:
-        if identifier(o):
-            return method(o)
-    else:
-        raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
+        return wrapper
 
+    def default(self, o):
+        for identifier, method in self.serializer_registry:
+            if identifier(o):
+                return method(o)
+        else:
+            raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
 
-def dumps(data, dumps_func: Optional[Callable] = None, **kwargs) -> str:
-    if not dumps_func:
-        import json
-        dumps_func = json.dumps
-    return dumps_func(data, default=default, **kwargs)
+    def dumps(self, data, **kwargs) -> str:
+        if 'default' in kwargs:
+            default = kwargs.pop('default')
+
+            def metadefault(o):
+                try:
+                    return default(o)
+                except TypeError:
+                    return self.default(o)
+
+            return self.dumps_func(data, default=metadefault, **kwargs)
+        else:
+            return self.dumps_func(data, default=self.default, **kwargs)
 
 
 if __name__ == "__main__":
@@ -61,7 +77,10 @@ if __name__ == "__main__":
     from dataclasses import dataclass, is_dataclass, fields
     from pathlib import Path
 
-    @serializer(identifier=is_dataclass)
+    json_register = JSONRegister()
+
+
+    @json_register.serializer(identifier=is_dataclass)
     def serialize_dataclasses(dc):
         # Don't use asdict, no need to recurse here
         data = {
@@ -70,7 +89,7 @@ if __name__ == "__main__":
         }
         return data
 
-    @serializer(cls=Path)
+    @json_register.serializer(cls=Path)
     def serialize_path(pth):
         return str(pth)
 
@@ -90,4 +109,4 @@ if __name__ == "__main__":
         "Python3.11": Onion(FilePath('python', Path('/usr/bin'))),
     }
 
-    print(dumps(fp))
+    print(json_register.dumps(fp))
