@@ -1,23 +1,10 @@
 from pathlib import Path
-from contextlib import contextmanager
 
-from magicjson import loads, deserializer, __version__
-from magicjson.registration import clear_registers
-from magicjson.exceptions import MissingDeserializerError
+from magicjson import __version__, JSONRegister, RegisterError
 
 from pytest import raises
 
 
-@contextmanager
-def register_cleanup():
-    clear_registers()
-    try:
-        yield
-    finally:
-        clear_registers()
-
-
-@register_cleanup()
 def test_deserialize_basic():
     fake_path = "usr/bin/python"
 
@@ -29,14 +16,13 @@ def test_deserialize_basic():
             f'}} '
             f'}}')
 
-    @deserializer(cls=Path)
-    def deserialize_path(pth_str):
-        return Path(pth_str)
+    register = JSONRegister()
 
-    assert loads(data) == {"obj1": Path(fake_path)}
+    register.register_cls_decoder(Path, Path)
+
+    assert register.loads(data) == {"obj1": Path(fake_path)}
 
 
-@register_cleanup()
 def test_deserialize_fail():
     fake_path = "usr/bin/python"
 
@@ -48,11 +34,12 @@ def test_deserialize_fail():
             f'}} '
             f'}}')
 
-    with raises(MissingDeserializerError) as e_info:
-        _ = loads(data)
+    register = JSONRegister()
+
+    with raises(RegisterError) as e_info:
+        _ = register.loads(data)
 
 
-@register_cleanup()
 def test_deserialize_list():
     fake_path = 'usr/bin/python'
     fake_path2 = 'usr/bin/python2'
@@ -68,10 +55,9 @@ def test_deserialize_list():
             f'}}'
             f']')
 
-    @deserializer(cls=Path)
-    def deserialize_path(pth):
-        return Path(pth)
+    register = JSONRegister()
+    register.register_cls_decoder(Path, Path)
 
-    result = loads(data)
+    result = register.loads(data)
 
     assert result == [Path(fake_path), Path(fake_path2)]

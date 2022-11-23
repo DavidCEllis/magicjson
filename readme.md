@@ -4,146 +4,141 @@ Easy handling of JSON serialization and deserialization for python objects.
 If you are just interested in making basic serialization easier you might
 want to look [here](https://github.com/DavidCEllis/magicjson/blob/main/plain_serializer/jsonregister.py).
 
-I thought this would use magic __ methods but decorators were more flexible
-and now this might need a better name.
-
-If you want your JSON decoding to be fast this module is not for you.
-If you want to be able to round-trip python objects to JSON and back
-this might be for you.
-
 ## Motivation ##
-While working on PrefabClasses I ran into the issue of how to add handling of 
-JSON encoding for the derived classes. Defining a 'default' function allowed
-for easy recursive serialization but became awkward when then handling other
+While working on PrefabClasses I ran into the issue of how to add handling 
+of JSON encoding for the derived classes. Defining a 'default' function allowed 
+for easy recursive serialization but became awkward when then handling other 
 objects without built-in serialization.
 
-For instance: if an attribute of the prefab is a Path, then the JSON serializer
-needs to know how to serialize both the prefab and the Path object as neither
-has a default serialization method. 
+This module provides a `JSONRegister` class that can be used to collect
+methods to serialize and reconstruct data to/from JSON. 
 
-The `json.dumps` function provides a way to define either a deserializaton class 
-or a default method, however defining a default method will override a default 
-provided by the class and the function only has 1 argument so a default method
-would need to know how to serialize every potential method.
+The `JSONRegister` class accepts 1 argument which is jsonlib which should
+be a JSON module such as the stdlib module that provides `dumps` and `loads` 
+functions where the `dumps` function **must** accept a default parameter
+in the same manner as the stdlib `dumps`. If these methods are called
+withtout providing a json module, it will lazily fall back to the stdlib.
 
-Looking at `dataclasses` it seems the 
-[solution](https://github.com/python/cpython/blob/3e335f2c0de9b7fab542a18d603f5bbdb1fb2ef3/Lib/dataclasses.py#L1242) 
-used there is to create an asdict function that would do all of the work necesary 
-to create a serializable form.
-This involves recursing through the contents of the class and checking for 
-tuples/namedtuples/lists/dicts specifically and would not handle arbitrary
-container types.
+Alternatively the class also provides `default` and `reconstruct` methods.
+`default` is intended to be provided to a `dump` or `dumps` function.
+`reconstruct` is intended to be run on the result of a `load` or `loads` function.
 
-The idea then was to make a module that would allow simple decorators to declare
-that a function was the method for a class to be serialized. These can then be
-used to generate a 'default' function that covers all of the objects.
-Working this way the json serializer does the traversal for us and will convert
-each object using the appropriate function from the register.
 
-It then seemed interesting to find a way to make the deserialization/loads method
-return the original objects instead of just a plain dictionary.
+## Examples ##
 
-## Example Usage ##
+Example 1: Path objects
 
-Code:
 ```python
 from pathlib import Path
 
-from magicjson import dumps, loads, serializer, deserializer
+from magicjson import JSONRegister
 
-@serializer(cls=Path)
-def serialize_path(pth: Path) -> str:
-    return str(pth)
+register = JSONRegister()
 
-@deserializer(cls=Path)
-def deserialize_path(pth: str) -> Path:
-    return Path(pth)
+register.register_cls_encoder(cls=Path, method=str)
+register.register_cls_decoder(cls=Path, method=Path)
 
 test_example = {
     "test1": Path("test1"),
     "test2": Path("test2")
 }
 
-test_dump = dumps(test_example, indent=2)
-test_recover = loads(test_dump)
+test_dump = register.dumps(test_example, indent=2)
+test_recover = register.loads(test_dump)
 
+print("JSON Output:")
 print(test_dump)
-print(f"{(test_recover == test_example)=}")
+print("Recovered Dict:")
+print(test_recover)
 ```
 
 Output:
 ```
+JSON Output:
 {
   "test1": {
-    "_magicjson": "0.1.0",
+    "_magicjson": "v0.0.2a",
     "_deserializer": "Path",
     "contents": "test1"
   },
   "test2": {
-    "_magicjson": "0.1.0",
+    "_magicjson": "v0.0.2a",
     "_deserializer": "Path",
     "contents": "test2"
   }
 }
-(test_recover == test_example)=True
+Recovered Dict:
+{'test1': PosixPath('test1'), 'test2': PosixPath('test2')}
 ```
 
-## Usage with DataClasses #
+Example 2: Dataclasses
 
 ```python
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
-from magicjson import dumps, loads
-from magicjson.stdlib_serializers import (
-    register_path_serializer, register_dataclass_serializer, magicjson_dataclass
-)
+from magicjson import JSONRegister
 
-# builtin dataclass and path serializers
-register_dataclass_serializer()
-register_path_serializer()
+register = JSONRegister()
 
 
-@magicjson_dataclass
 @dataclass
 class Coordinate:
     x: float
     y: float
 
 
-@magicjson_dataclass
 @dataclass
 class Circle:
     radius: float
     origin: Coordinate
 
 
-basic_circle = Circle(radius=1.0, origin=Coordinate(0.0, 0.0))
-circle_json = dumps(basic_circle, indent=2)
-circle_restored = loads(circle_json)
+@register.cls_encoder(Circle)
+@register.cls_encoder(Coordinate)
+def plain_dict(dc):
+    # Don't use dataclasses.asdict as it will recurse and break the Coordinate object
+    return {f.name: getattr(dc, f.name) for f in fields(dc)}
 
+
+@register.cls_decoder(Circle)
+def decode_circle(data):
+    return Circle(**data)
+
+
+@register.cls_decoder(Coordinate)
+def decode_coordinate(data):
+    return Coordinate(**data)
+
+
+basic_circle = Circle(radius=1.0, origin=Coordinate(0.0, 0.0))
+
+circle_json = register.dumps(basic_circle, indent=2)
+circle_restored = register.loads(circle_json)
+
+print("JSON Output:")
 print(circle_json)
-print(f"{(circle_restored == basic_circle)=}")
+print("Reconstructed Data:")
+print(circle_restored)
 ```
 
 Output:
 ```
+JSON Output:
 {
-  "_magicjson": "0.1.0",
-  "_deserializer": "dataclass",
+  "_magicjson": "v0.0.2a",
+  "_deserializer": "Circle",
   "contents": {
     "radius": 1.0,
     "origin": {
-      "_magicjson": "0.1.0",
-      "_deserializer": "dataclass",
+      "_magicjson": "v0.0.2a",
+      "_deserializer": "Coordinate",
       "contents": {
         "x": 0.0,
-        "y": 0.0,
-        "__class__.__name__": "Coordinate"
+        "y": 0.0
       }
-    },
-    "__class__.__name__": "Circle"
+    }
   }
 }
-(circle_restored == basic_circle)=True
+Reconstructed Data:
+Circle(radius=1.0, origin=Coordinate(x=0.0, y=0.0))
 ```
-

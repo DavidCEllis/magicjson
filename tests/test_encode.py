@@ -1,24 +1,14 @@
 import json
-from contextlib import contextmanager
 
-from magicjson import __version__, dumps
-from magicjson.registration import serializer, clear_registers
+from magicjson import __version__, JSONRegister
 
 from pytest import raises
 
 
-@contextmanager
-def register_cleanup():
-    clear_registers()
-    try:
-        yield
-    finally:
-        clear_registers()
-
-
-@register_cleanup()
 def test_object_dumps():
     version = __version__
+
+    register = JSONRegister()
 
     class Serializable:
         def __init__(self, x):
@@ -34,11 +24,11 @@ def test_object_dumps():
         def __repr__(self):
             return f"Serializable2(x={self.x})"
 
-    @serializer(cls=Serializable)
+    @register.cls_encoder(cls=Serializable)
     def serialize_cls(inst):
         return {'x': inst.x}
 
-    @serializer(cls=Serializable2, deserialize_auto=False)
+    @register.cls_encoder(cls=Serializable2, auto_name=False)
     def serialize_cls2(inst):
         return {'x': inst.x}
 
@@ -54,11 +44,12 @@ def test_object_dumps():
         },
         "Second": {"x": 2}
     }
-    assert dumps(serialize_data) == json.dumps(expected_data)
+    assert register.dumps(serialize_data) == json.dumps(expected_data)
 
 
-@register_cleanup()
 def test_failure():
+
+    register = JSONRegister()
 
     class Unserializable:
         def __init__(self, x):
@@ -68,4 +59,4 @@ def test_failure():
             return f"Serializable(x={self.x})"
 
     with raises(TypeError) as e_info:
-        dumps([Unserializable(1)])
+        register.dumps([Unserializable(1)])

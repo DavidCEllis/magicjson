@@ -77,7 +77,10 @@ class JSONRegister:
 
     @classmethod
     def combined_register(
-        cls, registries: Iterable["JSONRegister"], *, dumps_func: Callable[..., str] = None
+        cls,
+        registries: Iterable["JSONRegister"],
+        *,
+        dumps_func: Callable[..., str] = None,
     ):
         """
         Combine multiple JSONRegisters into one in the order given.
