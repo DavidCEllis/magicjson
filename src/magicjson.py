@@ -108,13 +108,13 @@ class JSONRegister:
 
         return wrapper
 
-    def register_decoder(self, name, method):
+    def register_decoder(self, name: str, method: Callable):
         if name in self.decoder_register:
             raise RegisterError(f"Name {name} is already used in the register.")
 
         self.decoder_register[name] = method
 
-    def register_cls_decoder(self, cls, method):
+    def register_cls_decoder(self, cls: type, method: Callable):
         self.register_decoder(cls.__name__, method)
 
     def decoder(self, name):
