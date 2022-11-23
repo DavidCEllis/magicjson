@@ -21,7 +21,7 @@ def test_no_identifier():
 
     register = JSONRegister()
 
-    @register.cls_serializer(cls=Test2, auto_name=False)
+    @register.cls_encoder(cls=Test2, auto_name=False)
     def serialize_test2(obj):
         return {'x': obj.x, 'y': obj.y}
 

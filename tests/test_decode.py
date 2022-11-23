@@ -1,7 +1,6 @@
 from pathlib import Path
 
 from magicjson import __version__, JSONRegister, RegisterError
-import json
 
 from pytest import raises
 
@@ -19,9 +18,9 @@ def test_deserialize_basic():
 
     register = JSONRegister()
 
-    register.register_cls_deserializer(Path, Path)
+    register.register_cls_decoder(Path, Path)
 
-    assert register.deserialize(json.loads(data)) == {"obj1": Path(fake_path)}
+    assert register.loads(data) == {"obj1": Path(fake_path)}
 
 
 def test_deserialize_fail():
@@ -38,7 +37,7 @@ def test_deserialize_fail():
     register = JSONRegister()
 
     with raises(RegisterError) as e_info:
-        _ = register.deserialize(json.loads(data))
+        _ = register.loads(data)
 
 
 def test_deserialize_list():
@@ -57,8 +56,8 @@ def test_deserialize_list():
             f']')
 
     register = JSONRegister()
-    register.register_cls_deserializer(Path, Path)
+    register.register_cls_decoder(Path, Path)
 
-    result = register.deserialize(json.loads(data))
+    result = register.loads(data)
 
     assert result == [Path(fake_path), Path(fake_path2)]

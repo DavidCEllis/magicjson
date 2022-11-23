@@ -24,11 +24,11 @@ def test_object_dumps():
         def __repr__(self):
             return f"Serializable2(x={self.x})"
 
-    @register.cls_serializer(cls=Serializable)
+    @register.cls_encoder(cls=Serializable)
     def serialize_cls(inst):
         return {'x': inst.x}
 
-    @register.cls_serializer(cls=Serializable2, auto_name=False)
+    @register.cls_encoder(cls=Serializable2, auto_name=False)
     def serialize_cls2(inst):
         return {'x': inst.x}
 
@@ -44,7 +44,7 @@ def test_object_dumps():
         },
         "Second": {"x": 2}
     }
-    assert json.dumps(serialize_data, default=register.default) == json.dumps(expected_data)
+    assert register.dumps(serialize_data) == json.dumps(expected_data)
 
 
 def test_failure():
@@ -59,4 +59,4 @@ def test_failure():
             return f"Serializable(x={self.x})"
 
     with raises(TypeError) as e_info:
-        json.dumps([Unserializable(1)], default=register.default)
+        register.dumps([Unserializable(1)])

@@ -32,12 +32,19 @@ class SerializerInfo:
 
 
 class JSONRegister:
-    def __init__(self):
-        self.serialize_register = []
-        self.deserialize_register = {}
+    def __init__(self, jsonlib=None):
+        """
+        Register of methods to assist in converting objects so and from JSON
+
+        :param jsonlib: json library providing dumps and loads functions
+        """
+        self.encoder_register = []
+        self.decoder_register = {}
+
+        self.jsonlib = jsonlib
 
     # Registration Methods
-    def register_serializer(
+    def register_encoder(
             self,
             identifier: Callable[[object], bool],
             method: Callable[[object], Any],
@@ -51,11 +58,11 @@ class JSONRegister:
         :param method: function to use to serialize identified objects
         :param name: Name for a deserializer to recreate the original object
         """
-        self.serialize_register.append(
+        self.encoder_register.append(
             SerializerInfo(identifier, method, name)
         )
 
-    def register_cls_serializer(
+    def register_cls_encoder(
             self,
             cls: type,
             method: Callable[[object], Any],
@@ -74,49 +81,49 @@ class JSONRegister:
         identifier = lambda obj: isinstance(obj, cls)
         if name is None and auto_name:
             name = cls.__name__
-        self.serialize_register.append(
+        self.encoder_register.append(
             SerializerInfo(identifier, method, name)
         )
 
-    def serializer(
+    def encoder(
             self,
             identifier: Callable[[object], bool],
             name: Optional[str] = None,
     ):
         def wrapper(method: Callable[[object], Any]):
-            self.register_serializer(identifier, method, name)
+            self.register_encoder(identifier, method, name)
             return method
         return wrapper
 
-    def cls_serializer(
+    def cls_encoder(
             self,
             cls: type,
             name: Optional[str] = None,
             auto_name: bool = True,
     ):
         def wrapper(method: Callable[[object], Any]):
-            self.register_cls_serializer(cls, method, name, auto_name)
+            self.register_cls_encoder(cls, method, name, auto_name)
             return method
         return wrapper
 
-    def register_deserializer(self, name, method):
-        if name in self.deserialize_register:
+    def register_decoder(self, name, method):
+        if name in self.decoder_register:
             raise RegisterError(f"Name {name} is already used in the register.")
 
-        self.deserialize_register[name] = method
+        self.decoder_register[name] = method
 
-    def register_cls_deserializer(self, cls, method):
-        self.register_deserializer(cls.__name__, method)
+    def register_cls_decoder(self, cls, method):
+        self.register_decoder(cls.__name__, method)
 
-    def deserializer(self, name):
+    def decoder(self, name):
         def wrapper(method):
-            self.register_deserializer(name, method)
+            self.register_decoder(name, method)
             return method
         return wrapper
 
-    def cls_deserializer(self, cls):
+    def cls_decoder(self, cls):
         def wrapper(method):
-            self.register_cls_deserializer(cls, method)
+            self.register_cls_decoder(cls, method)
             return method
         return wrapper
 
@@ -126,7 +133,7 @@ class JSONRegister:
 
         use: json.dumps(obj, default=json_register.default)
         """
-        for identifier, method, name in reversed(self.serialize_register):
+        for identifier, method, name in reversed(self.encoder_register):
             if identifier(o):
                 if name:
                     result = {
@@ -140,24 +147,43 @@ class JSONRegister:
 
         raise TypeError(f"Object of type {o.__class__.__name__} is not JSON serializable")
 
-    def deserialize(self, data):
+    def reconstruct(self, data):
         if isinstance(data, dict):
             if '_magicjson' in data:
                 # First deserialize anything further down the chain
-                converted_data = self.deserialize(data["contents"])
+                converted_data = self.reconstruct(data["contents"])
                 # Then use the stored method to convert back to python
                 deserializer_name = data["_deserializer"]
-                if deserializer_name not in self.deserialize_register:
+                if deserializer_name not in self.decoder_register:
                     raise RegisterError(
                         f"{data['_deserializer']} is not registered as a deserializer"
                     )
-                method = self.deserialize_register[deserializer_name]
+                method = self.decoder_register[deserializer_name]
                 data = method(converted_data)
             else:
                 for key in data.keys():
-                    data[key] = self.deserialize(data[key])
+                    data[key] = self.reconstruct(data[key])
         elif isinstance(data, list):
             # Iterate over indices as we are replacing values
             for i in range(len(data)):
-                data[i] = self.deserialize(data[i])
+                data[i] = self.reconstruct(data[i])
         return data
+
+    def dumps(self, obj, **kwargs):
+        if self.jsonlib is None:
+            import json
+            self.jsonlib = json
+
+        if 'default' in kwargs:
+            raise TypeError("JSONRegister.dump does not support the use of additional default functions")
+
+        return self.jsonlib.dumps(obj, default=self.default, **kwargs)
+
+    def loads(self, s, **kwargs):
+        if self.jsonlib is None:
+            import json
+            self.jsonlib = json
+
+        pydata = self.jsonlib.loads(s, **kwargs)
+
+        return self.reconstruct(pydata)

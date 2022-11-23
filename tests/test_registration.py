@@ -11,11 +11,11 @@ def test_add_serializer():
 
     method = lambda obj: isinstance(obj, Path)
 
-    @register.serializer(identifier=method)
+    @register.encoder(identifier=method)
     def serialize_path(pth):
         return str(pth)
 
-    assert register.serialize_register == [SerializerInfo(method, serialize_path, None)]
+    assert register.encoder_register == [SerializerInfo(method, serialize_path, None)]
 
 
 def test_add_serializer_cls():
@@ -23,12 +23,12 @@ def test_add_serializer_cls():
 
     register = JSONRegister()
 
-    @register.cls_serializer(cls=Path)
+    @register.cls_encoder(cls=Path)
     def serialize_path(pth):
         return str(pth)
 
-    assert register.serialize_register[0].method == serialize_path
-    assert register.serialize_register[0].name == 'Path'
+    assert register.encoder_register[0].method == serialize_path
+    assert register.encoder_register[0].name == 'Path'
 
 
 def test_add_deserializer():
@@ -36,11 +36,11 @@ def test_add_deserializer():
 
     register = JSONRegister()
 
-    @register.deserializer(name='Path')
+    @register.decoder(name='Path')
     def deserialize_path(data):
         return Path(data)
 
-    assert register.deserialize_register['Path'] == deserialize_path
+    assert register.decoder_register['Path'] == deserialize_path
 
 
 def test_double_deserializer_error():
@@ -48,11 +48,11 @@ def test_double_deserializer_error():
 
     register = JSONRegister()
 
-    @register.cls_deserializer(cls=Path)
+    @register.cls_decoder(cls=Path)
     def deserialize_path(data):
         return Path(data)
 
     with raises(RegisterError) as e_info:
-        @register.cls_deserializer(cls=Path)
+        @register.cls_decoder(cls=Path)
         def deserialize_path_again(data):
             return Path(data)

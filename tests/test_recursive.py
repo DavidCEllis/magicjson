@@ -25,25 +25,25 @@ def test_recursive():
             self.x = x
             self.y = y
 
-    @register.cls_serializer(cls=Test1)
+    @register.cls_encoder(cls=Test1)
     def serialize_test1(obj):
         return Test2(obj.x, obj.y)
 
-    @register.cls_deserializer(cls=Test1)
+    @register.cls_decoder(cls=Test1)
     def deserialize_test1(obj):
         return Test1(obj.x, obj.y)
 
-    @register.cls_serializer(cls=Test2)
+    @register.cls_encoder(cls=Test2)
     def serialize_test2(obj):
         return {"x": obj.x, "y": obj.y}
 
-    @register.cls_deserializer(cls=Test2)
+    @register.cls_decoder(cls=Test2)
     def deserialize_test2(data):
         return Test2(**data)
 
     example = Test1(42, 'Apples')
 
-    assert example == register.deserialize(loads(dumps(example, default=register.default)))
+    assert example == register.reconstruct(loads(dumps(example, default=register.default)))
 
 
 def test_failed_recursive():
@@ -63,7 +63,7 @@ def test_failed_recursive():
             self.x = x
             self.y = y
 
-    @register.cls_serializer(cls=Test1)
+    @register.cls_encoder(cls=Test1)
     def serialize_test1(obj):
         return Test2(obj.x, obj.y)
 
