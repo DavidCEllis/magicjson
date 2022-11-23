@@ -4,6 +4,9 @@ Easy handling of JSON serialization and deserialization for python objects.
 If you are just interested in making basic serialization easier you might
 want to look [here](https://github.com/DavidCEllis/magicjson/blob/main/plain_serializer/jsonregister.py).
 
+I originally thought this would use a __json__ magic method but decided
+against that and now this needs a better name.
+
 ## Motivation ##
 While working on PrefabClasses I ran into the issue of how to add handling 
 of JSON encoding for the derived classes. Defining a 'default' function allowed 
