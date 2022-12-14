@@ -176,15 +176,15 @@ class JSONRegister:
         return data
 
     def dumps(self, obj, **kwargs):
-        if self.jsonlib is None:
-            import json
-
-            self.jsonlib = json
-
         if "default" in kwargs:
             raise TypeError(
                 "JSONRegister.dump does not support the use of additional default functions"
             )
+
+        if self.jsonlib is None:
+            import json
+
+            self.jsonlib = json
 
         return self.jsonlib.dumps(obj, default=self.default, **kwargs)
 

@@ -60,3 +60,14 @@ def test_failure():
 
     with raises(TypeError) as e_info:
         register.dumps([Unserializable(1)])
+
+
+def test_tried_default():
+    register = JSONRegister()
+
+    from pathlib import Path
+    x = Path('path/to/python')
+
+    with raises(TypeError):
+        register.dumps({'x': x}, default=str)
+
