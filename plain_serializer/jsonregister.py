@@ -8,8 +8,7 @@ While the asdict function of dataclasses provides recursion through the
 dataclass, this is not necessary as the json module is already going to
 do that and will also handle going through any other containers.
 """
-from typing import Optional
-from collections.abc import Callable, Iterable
+from collections.abc import Callable
 
 
 class JSONRegister:
@@ -23,38 +22,25 @@ class JSONRegister:
         else:
             self.dumps_func = dumps_func
 
-    def serializer(
-        self,
-        *,
-        identifier: Optional[Callable[[object], bool]] = None,
-        cls: Optional[type] = None,
-    ):
-        """
-        Given an identifier OR a class object (type), register a
-        serialization method for the objects
+    def register_serializer(self, cls, func):
+        self.serializer_registry.append((cls, func))
 
-        :param identifier: Method to identify serializable objects
+    def serializer(self, cls: type):
+        """
+        Given a class, register this function as a serialization method for instances.
+
         :param cls: Class to serialize
-        :return:
+        :return: wrapper function to use to serialize a class
         """
-        if cls and identifier:
-            raise TypeError("serializer requires an identifier XOR a class, not both")
-        elif not (cls or identifier):
-            raise TypeError("serializer requires either a cls or an identifier")
-
-        # the cls method is just convenience for isinstance identifiers
-        if cls:
-            identifier = lambda obj: isinstance(obj, cls)
-
         def wrapper(func: Callable):
-            self.serializer_registry.append((identifier, func))
+            self.register_serializer(cls, func)
             return func
 
         return wrapper
 
     def default(self, o):
-        for identifier, method in self.serializer_registry:
-            if identifier(o):
+        for cls, method in self.serializer_registry:
+            if isinstance(o, cls):
                 return method(o)
         else:
             raise TypeError(
@@ -75,34 +61,15 @@ class JSONRegister:
         else:
             return self.dumps_func(obj, default=self.default, **kwargs)
 
-    @classmethod
-    def combined_register(
-        cls,
-        registries: Iterable["JSONRegister"],
-        *,
-        dumps_func: Callable[..., str] = None,
-    ):
-        """
-        Combine multiple JSONRegisters into one in the order given.
-
-        :param registries: iterable/list of JSONRegister instances
-        :param dumps_func:
-        :return:
-        """
-        new_register = cls(dumps_func=dumps_func)
-        for registry in registries:
-            new_register.serializer_registry.extend(registry.serializer_registry)
-
 
 if __name__ == "__main__":
     """Demo to show serialization of objects inside other objects"""
-    from dataclasses import dataclass, is_dataclass, fields
+    from dataclasses import dataclass, fields
     from pathlib import Path
 
     json_register = JSONRegister()
 
-    @json_register.serializer(identifier=is_dataclass)
-    def serialize_dataclasses(dc):
+    def serialize_dataclass(dc):
         # Don't use asdict, no need to recurse here
         data = {f.name: getattr(dc, f.name) for f in fields(dc)}
         return data
@@ -120,6 +87,9 @@ if __name__ == "__main__":
     class Onion:
         # Extra layer to demonstrate recursion
         layer: FilePath
+
+    json_register.register_serializer(FilePath, serialize_dataclass)
+    json_register.register_serializer(Onion, serialize_dataclass)
 
     fp = {
         "Python3.10": Onion(FilePath("python", Path("/usr/bin"))),
