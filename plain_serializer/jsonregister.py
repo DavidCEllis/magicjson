@@ -3,16 +3,11 @@ This is a basic single file serializer that only handles adding methods
 to convert to JSON and does not deal with deserialization.
 
 Example usage in the if __name__ == '__main__' block.
-
-While the asdict function of dataclasses provides recursion through the
-dataclass, this is not necessary as the json module is already going to
-do that and will also handle going through any other containers.
 """
-from collections.abc import Callable
 
 
 class JSONRegister:
-    def __init__(self, *, dumps_func: Callable[..., str] = None):
+    def __init__(self, *, dumps_func=None):
         self.serializer_registry = []
 
         if dumps_func is None:
@@ -26,13 +21,8 @@ class JSONRegister:
         self.serializer_registry.append((cls, func))
 
     def serializer(self, cls: type):
-        """
-        Given a class, register this function as a serialization method for instances.
-
-        :param cls: Class to serialize
-        :return: wrapper function to use to serialize a class
-        """
-        def wrapper(func: Callable):
+        # Decorator form of register_serializer
+        def wrapper(func):
             self.register_serializer(cls, func)
             return func
 
@@ -63,7 +53,7 @@ class JSONRegister:
 
 
 if __name__ == "__main__":
-    """Demo to show serialization of objects inside other objects"""
+    # Demo to show serialization of objects inside other objects
     from dataclasses import dataclass, fields
     from pathlib import Path
 
@@ -92,8 +82,8 @@ if __name__ == "__main__":
     json_register.register_serializer(Onion, serialize_dataclass)
 
     fp = {
-        "Python3.10": Onion(FilePath("python", Path("/usr/bin"))),
-        "Python3.11": Onion(FilePath("python", Path("/usr/bin"))),
+        "Python3.10": Onion(FilePath("python310", Path("/usr/bin"))),
+        "Python3.11": Onion(FilePath("python311", Path("/usr/bin"))),
     }
 
     print(json_register.dumps(fp))
