@@ -7,6 +7,35 @@ Example usage in the if __name__ == '__main__' block.
 
 
 class JSONRegister:
+    """
+    Register for functions that convert objects into JSON serializable
+    base classes.
+
+    Create a register::
+
+        register = JSONRegister(dumps_func=json.dumps)
+
+    Add conversion methods using register_serializer::
+
+        register_serializer(Path, str)
+
+    Or by using a @register.serializes decorator
+
+        @register.serializes(MyDataClass)
+        def serialize_mdc(mdc_inst):
+            return {f.name: getattr(mdc_inst, f.name) for f in dataclasses.fields(mdc_inst)}
+
+    Once the methods have been registered, use the serializer in one of two ways.
+
+    Pass the provided .default method as a default to a JSON encoder function::
+
+        json.dumps(data, default=register.default)
+
+    Use the .dumps method directly from the register::
+
+        register.dumps(data)
+
+    """
     def __init__(self, *, dumps_func=None):
         self.serializer_registry = []
 
