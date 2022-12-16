@@ -1,84 +1,37 @@
-"""
-This is a basic single file serializer that only handles adding methods
-to convert to JSON and does not deal with deserialization.
-
-Example usage in the if __name__ == '__main__' block.
-"""
-
-
 class JSONRegister:
-    """
-    Register for functions that convert objects into JSON serializable
-    base classes.
+    def __init__(self):
+        self.registry = []
 
-    Create a register::
+    def register(self, cls, func):
+        self.registry.append((cls, func))
 
-        register = JSONRegister(dumps_func=json.dumps)
-
-    Add conversion methods using register_serializer::
-
-        register_serializer(Path, str)
-
-    Or by using a @register.serializes decorator
-
-        @register.serializes(MyDataClass)
-        def serialize_mdc(mdc_inst):
-            return {f.name: getattr(mdc_inst, f.name) for f in dataclasses.fields(mdc_inst)}
-
-    Once the methods have been registered, use the serializer in one of two ways.
-
-    Pass the provided .default method as a default to a JSON encoder function::
-
-        json.dumps(data, default=register.default)
-
-    Use the .dumps method directly from the register::
-
-        register.dumps(data)
-
-    """
-    def __init__(self, *, dumps_func=None):
-        self.serializer_registry = []
-
-        if dumps_func is None:
-            import json
-
-            self.dumps_func = json.dumps
-        else:
-            self.dumps_func = dumps_func
-
-    def register_serializer(self, cls, func):
-        self.serializer_registry.append((cls, func))
-
-    def serializer(self, cls: type):
-        # Decorator form of register_serializer
+    def register_function(self, cls):
+        """Decorate a function"""
         def wrapper(func):
-            self.register_serializer(cls, func)
+            self.register(cls, func)
             return func
-
         return wrapper
 
+    @property
+    def register_method(self):
+        """Decorate a class method"""
+        class RegisterDecorator:
+            def __init__(inst, func):
+                inst.func = func
+
+            def __set_name__(inst, owner, name):
+                self.register(owner, inst.func)
+                setattr(owner, name, inst.func)
+
+        return RegisterDecorator
+
     def default(self, o):
-        for cls, method in self.serializer_registry:
+        for cls, func in self.registry:
             if isinstance(o, cls):
-                return method(o)
-        else:
-            raise TypeError(
-                f"Object of type {o.__class__.__name__} is not JSON serializable"
-            )
-
-    def dumps(self, obj, **kwargs) -> str:
-        if "default" in kwargs:
-            default = kwargs.pop("default")
-
-            def metadefault(o):
-                try:
-                    return default(o)
-                except TypeError:
-                    return self.default(o)
-
-            return self.dumps_func(obj, default=metadefault, **kwargs)
-        else:
-            return self.dumps_func(obj, default=self.default, **kwargs)
+                return func(o)
+        raise TypeError(
+            f"Object of type {o.__class__.__name__} is not JSON serializable"
+        )
 
 
 if __name__ == "__main__":
@@ -88,31 +41,34 @@ if __name__ == "__main__":
 
     json_register = JSONRegister()
 
-    def serialize_dataclass(dc):
-        # Don't use asdict, no need to recurse here
-        data = {f.name: getattr(dc, f.name) for f in fields(dc)}
-        return data
+    # Serialize classes that already exist with simple methods
+    json_register.register(Path, str)
 
-    @json_register.serializer(cls=Path)
-    def serialize_path(pth):
-        return str(pth)
-
+    # Decorate methods on a class you create
     @dataclass
     class FilePath:
         filename: str
         folder: Path
+
+        @json_register.register_method
+        def serialize(self):
+            return {f.name: getattr(self, f.name) for f in fields(self)}
 
     @dataclass
     class Onion:
         # Extra layer to demonstrate recursion
         layer: FilePath
 
-    json_register.register_serializer(FilePath, serialize_dataclass)
-    json_register.register_serializer(Onion, serialize_dataclass)
+    # register functions you create on classes you didn't create
+    @json_register.register_function(Onion)
+    def serialize(self):
+        return {f.name: getattr(self, f.name) for f in fields(self)}
 
     fp = {
         "Python3.10": Onion(FilePath("python310", Path("/usr/bin"))),
         "Python3.11": Onion(FilePath("python311", Path("/usr/bin"))),
     }
 
-    print(json_register.dumps(fp))
+    import json
+    s = json.dumps(fp, default=json_register.default)
+    print(s)
