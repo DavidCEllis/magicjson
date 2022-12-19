@@ -1,3 +1,6 @@
+# ARCHIVED #
+**This project has been archived as I decided to take a different approach.**
+
 # MagicJSON #
 Easy handling of JSON serialization and deserialization for python objects.
 
